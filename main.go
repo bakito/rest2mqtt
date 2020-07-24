@@ -59,7 +59,7 @@ func handleMQTT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if a.Token == "" || a.Token != token {
-		log.Print("Error: Token mismatch %s", a.Token)
+		log.Printf("Error: Token mismatch %s", a.Token)
 		http.Error(w, "", http.StatusUnauthorized)
 		return
 	}
