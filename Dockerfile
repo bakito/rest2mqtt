@@ -38,7 +38,7 @@ FROM scratch
 
 CMD ["/opt/go/main"]
 
-EXPOSE 8000
+EXPOSE 8080
 
 COPY --from=builder /go/src/app/main /opt/go/
 WORKDIR /opt/go/
