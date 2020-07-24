@@ -3,7 +3,7 @@
 ## Post Request
 
 ```bash
-curl --data '{"token":"token", "topic":"api/test", "payload": "test","qos":0}' localhost:8080/v1/mqtt
+curl --data '{"token":"token", "topic":"api/test", "payload": "test","qos":0, "retained":false }' localhost:8080/v1/mqtt
 ```
 
 ## Build for rpi

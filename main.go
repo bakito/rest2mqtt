@@ -70,20 +70,20 @@ func handleMQTT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Publish: topic %q, payload %q, qos %v, retained %v", a.Topic, a.Payload, a.QOS, a.Retained)
 	t := mqttClient.Publish(a.Topic, a.QOS, a.Retained, a.Payload)
 	if t.Error() != nil {
-		log.Printf("Error: %v", t.Error())
+		log.Printf("Error: %v / Published: topic %q, payload %q, qos %v, retained %v", t.Error(), a.Topic, a.Payload, a.QOS, a.Retained)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("Published: topic %q, payload %q, qos %v, retained %v", a.Topic, a.Payload, a.QOS, a.Retained)
 }
 
 func newClient(url string, user string, password string) (mqtt.Client, error) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(url)
 
-	opts.SetClientID("rest-api")
+	opts.SetClientID("rest2mqtt_" + os.Getenv("HOSTNAME"))
 	opts.SetUsername(user)
 	opts.SetPassword(password)
 	opts.SetCleanSession(false)
@@ -97,6 +97,7 @@ func newClient(url string, user string, password string) (mqtt.Client, error) {
 		return nil, token.Error()
 	}
 
+	log.Printf("Using MQTT host: %s", url)
 	return client, nil
 }
 
@@ -107,5 +108,3 @@ type mqttAction struct {
 	Retained bool   `json:"retained"`
 	Token    string `json:"token"`
 }
-
-// {"token":"token", "topic":"api/test", "payload": "test","qos":1}
