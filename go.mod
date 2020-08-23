@@ -1,6 +1,6 @@
 module github.com/bakito/rest2mqtt
 
-go 1.14
+go 1.15
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.2.0
