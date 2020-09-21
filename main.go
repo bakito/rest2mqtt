@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gorilla/mux"
@@ -87,6 +88,9 @@ func newClient(url string, user string, password string) (mqtt.Client, error) {
 	opts.SetUsername(user)
 	opts.SetPassword(password)
 	opts.SetCleanSession(false)
+	opts.SetAutoReconnect(true)
+	opts.SetMaxReconnectInterval(10 * time.Second)
+
 	opts.TLSConfig = &tls.Config{
 		InsecureSkipVerify: true,
 	}
