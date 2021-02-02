@@ -19,6 +19,15 @@ const (
 	envMQTTUser     = "MQTT_USER"
 	envMQTTPassword = "MQTT_PASSWORD"
 	envToken        = "TOKEN"
+
+	banner = `
+                _   ___  __  __  ____ _______ _______ 
+               | | |__ \|  \/  |/ __ \__   __|__   __|
+  _ __ ___  ___| |_   ) | \  / | |  | | | |     | |
+ | '__/ _ \/ __| __| / /| |\/| | |  | | | |     | |
+ | | |  __/\__ \ |_ / /_| |  | | |__| | | |     | |
+ |_|  \___||___/\__|____|_|  |_|\___\_\ |_|     |_|
+`
 )
 
 var (
@@ -33,10 +42,16 @@ func main() {
 		panic(err)
 	}
 	r := mux.NewRouter()
+	r.HandleFunc("/", handleRoot).Methods(http.MethodGet)
 	v1 := r.PathPrefix("/v1").Subrouter()
 	v1.HandleFunc("/mqtt", handleMQTT).Methods(http.MethodPost)
 	log.Printf("Starting on port: %d", 8080)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", 8080), r))
+}
+
+func handleRoot(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	_, _ = w.Write([]byte(banner))
 }
 
 func handleMQTT(w http.ResponseWriter, r *http.Request) {

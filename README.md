@@ -1,4 +1,4 @@
-# rest to mqtt bridge
+# rest to MQTT bridge
 
 ## Post Request
 

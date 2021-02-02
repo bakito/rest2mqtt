@@ -1,4 +1,4 @@
-FROM golang:1.14 as builder
+FROM golang:1.15 as builder
 # install xz
 RUN apt-get update && apt-get install -y \
     xz-utils \
