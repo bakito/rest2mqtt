@@ -23,12 +23,7 @@ ENV GO111MODULE=on \
 ADD . /go/src/app/
 
 # golinth
-RUN golint -set_exit_status  $(go list .)
-
-# tests
-RUN go test -coverprofile=coverage.out && \
-    go tool cover -func=coverage.out && \
-    rm -f coverage.out
+RUN make test
 
 # build the source
 RUN go build -a -installsuffix cgo -o main .
