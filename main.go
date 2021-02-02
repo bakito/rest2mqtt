@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/didip/tollbooth/v6"
+	"github.com/didip/tollbooth/v6/limiter"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -48,10 +50,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	lmt := tollbooth.NewLimiter(1, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
+
 	r := mux.NewRouter()
-	r.HandleFunc("/", handleRoot).Methods(http.MethodGet)
+	r.Handle("/", tollbooth.LimitFuncHandler(lmt, handleRoot)).Methods(http.MethodGet)
 	v1 := r.PathPrefix("/v1").Subrouter()
-	v1.HandleFunc("/mqtt", handleMQTT).Methods(http.MethodPost)
+	v1.Handle("/mqtt", tollbooth.LimitFuncHandler(lmt, handleMQTT)).Methods(http.MethodPost)
+
 	log.Infow("Starting", "port", 8080)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", 8080), r))
 }
