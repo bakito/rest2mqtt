@@ -12,13 +12,9 @@ RUN curl -L --progress-bar -o /usr/local/upx-3.96-amd64_linux.tar.xz https://git
 RUN go get golang.org/x/lint/golint
 # setup the working directory
 WORKDIR /go/src/app
-ARG ARG_GOARCH=amd64
-ARG ARG_GOARM
 ENV GO111MODULE=on \
   CGO_ENABLED=0 \
-  GOOS=linux \
-  GOARCH=${ARG_GOARCH}\
-  GOARM=${ARG_GOARM}
+  GOOS=linux
 
 ADD . /go/src/app/
 
