@@ -1,6 +1,6 @@
 module github.com/bakito/rest2mqtt
 
-go 1.15
+go 1.16
 
 require (
 	github.com/didip/tollbooth/v6 v6.1.0

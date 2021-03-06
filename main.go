@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -21,21 +22,15 @@ const (
 	envMQTTUser     = "MQTT_USER"
 	envMQTTPassword = "MQTT_PASSWORD"
 	envToken        = "TOKEN"
-
-	banner = `
-                _   ___  __  __  ____ _______ _______ 
-               | | |__ \|  \/  |/ __ \__   __|__   __|
-  _ __ ___  ___| |_   ) | \  / | |  | | | |     | |
- | '__/ _ \/ __| __| / /| |\/| | |  | | | |     | |
- | | |  __/\__ \ |_ / /_| |  | | |__| | | |     | |
- |_|  \___||___/\__|____|_|  |_|\___\_\ |_|     |_|
-`
 )
 
 var (
 	mqttClient mqtt.Client
 	token      = os.Getenv(envToken)
 	log        *zap.SugaredLogger
+
+	//go:embed banner.txt
+	banner string
 )
 
 func main() {
