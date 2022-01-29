@@ -26,7 +26,6 @@ var (
 
 func main() {
 	healthz := flag.Bool("healthz", false, "run healthcheck")
-
 	flag.Parse()
 
 	if *healthz {

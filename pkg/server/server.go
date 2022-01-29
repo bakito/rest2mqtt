@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
+	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-gonic/gin"
@@ -99,6 +100,18 @@ func handleHealthz(c *gin.Context) {
 }
 
 func (s *server) handleMQTT(c *gin.Context) {
+	auth := c.GetHeader("Authorization")
+	authorized := false
+	if auth != "" {
+		token := strings.Replace(auth, "Bearer ", "", 1)
+		if token != s.token {
+			s.log.Errorw("Error authorization token mismatch", "from", readUserIP(c), "token", token)
+			c.String(http.StatusUnauthorized, "")
+			return
+		}
+		authorized = true
+	}
+
 	a := &mqttAction{}
 	if err := c.ShouldBindJSON(a); err != nil {
 		s.log.Infow("Info unmarshalling body", "from", readUserIP(c), "error", err)
@@ -106,8 +119,8 @@ func (s *server) handleMQTT(c *gin.Context) {
 		return
 	}
 
-	if a.Token == "" || a.Token != s.token {
-		s.log.Errorw("Error token mismatch", "from", readUserIP(c), "token", a.Token)
+	if !authorized && (a.Token == nil || *a.Token != s.token) {
+		s.log.Errorw("Error message token mismatch", "from", readUserIP(c), "token", a.Token)
 		c.String(http.StatusUnauthorized, "")
 		return
 	}
@@ -136,11 +149,11 @@ func (s *server) handleMQTT(c *gin.Context) {
 }
 
 type mqttAction struct {
-	Topic    string `json:"topic"`
-	Payload  string `json:"payload"`
-	QOS      byte   `json:"qos"`
-	Retained bool   `json:"retained"`
-	Token    string `json:"token"`
+	Topic    string  `json:"topic"`
+	Payload  string  `json:"payload"`
+	QOS      byte    `json:"qos"`
+	Retained bool    `json:"retained"`
+	Token    *string `json:"token,omitempty"`
 }
 
 func readUserIP(c *gin.Context) string {

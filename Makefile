@@ -23,3 +23,5 @@ image:
 .PHONY: post
 post:
 	curl -s -o /dev/null -w "%{http_code}\n" --data "{\"token\":\"${REST2MQTT_TOKEN}\", \"topic\":\"api/test\", \"payload\": \"test\",\"qos\":0, \"retained\":false}" localhost:8080/v1/mqtt
+post-bearer:
+	curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer ${REST2MQTT_TOKEN}" --data "{\"topic\":\"api/test\", \"payload\": \"test\",\"qos\":0, \"retained\":false}" localhost:8080/v1/mqtt
