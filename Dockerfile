@@ -19,6 +19,7 @@ RUN upx rest2mqtt
 FROM scratch
 
 CMD ["/opt/go/rest2mqtt"]
+HEALTHCHECK CMD ["/opt/go/rest2mqtt", "-healthz"]
 
 EXPOSE 8080
 

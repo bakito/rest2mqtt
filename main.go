@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"flag"
 	"os"
 
 	"github.com/bakito/rest2mqtt/pkg/mqtt"
@@ -24,6 +25,14 @@ var (
 )
 
 func main() {
+	healthz := flag.Bool("healthz", false, "run healthcheck")
+
+	flag.Parse()
+
+	if *healthz {
+		os.Exit(server.Healthz())
+	}
+
 	cfg := zap.NewDevelopmentConfig()
 	cfg.DisableStacktrace = true
 	logger, _ := cfg.Build()

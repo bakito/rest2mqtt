@@ -15,6 +15,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	port        = 8080
+	healthzPath = "/healthz"
+)
+
 //go:embed banner.html
 var banner string
 
@@ -36,6 +41,7 @@ func New(log *zap.SugaredLogger, token string, mqttClient mqtt.Client, redisClie
 
 	r.Use(gin.Recovery())
 	r.GET("/", handleIndex)
+	r.GET(healthzPath, handleHealthz)
 	v1 := r.Group("/v1")
 	v1.Use(rateLimit)
 	v1.POST("/mqtt", s.handleMQTT)
@@ -55,8 +61,8 @@ type Server interface {
 }
 
 func (s *server) Run() {
-	s.log.Infow("Starting", "port", 8080)
-	s.log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", 8080), s.r))
+	s.log.Infow("Starting", "port", port)
+	s.log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), s.r))
 }
 
 func rateLimitMiddleware(client *libredis.Client) (gin.HandlerFunc, error) {
@@ -86,6 +92,10 @@ func rateLimitMiddleware(client *libredis.Client) (gin.HandlerFunc, error) {
 
 func handleIndex(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html", []byte(banner))
+}
+
+func handleHealthz(c *gin.Context) {
+	c.String(http.StatusOK, "OK")
 }
 
 func (s *server) handleMQTT(c *gin.Context) {
