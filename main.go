@@ -3,17 +3,16 @@ package main
 import (
 	"crypto/tls"
 	_ "embed"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/didip/tollbooth/v6"
-	"github.com/didip/tollbooth/v6/limiter"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
+	limiter "github.com/ulule/limiter/v3"
+	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
 	"go.uber.org/zap"
 )
 
@@ -43,71 +42,66 @@ func main() {
 	var err error
 	mqttClient, err = newClient(os.Getenv(envMQTTHost), os.Getenv(envMQTTUser), os.Getenv(envMQTTPassword))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	lmt := tollbooth.NewLimiter(1, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
+	// Define a limit rate to 4 requests per hour.
+	rate, err := limiter.NewRateFromFormatted("4-H")
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	store := memory.NewStore()
+	// Create a new middleware with the limiter instance.
+	middleware := mgin.NewMiddleware(limiter.New(store, rate))
 
-	r := mux.NewRouter()
-	r.Handle("/", tollbooth.LimitFuncHandler(lmt, handleRoot)).Methods(http.MethodGet)
-	v1 := r.PathPrefix("/v1").Subrouter()
-	v1.Handle("/mqtt", tollbooth.LimitFuncHandler(lmt, handleMQTT)).Methods(http.MethodPost)
+	r := gin.New()
+	r.Use(middleware, gin.Recovery())
+	r.GET("/", handleRoot)
+	r.POST("/v1/mqtt", handleMQTT)
 
 	log.Infow("Starting", "port", 8080)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", 8080), r))
 }
 
-func handleRoot(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	_, _ = w.Write([]byte(banner))
+func handleRoot(c *gin.Context) {
+	c.String(http.StatusOK, banner)
 }
 
-func handleMQTT(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Infow("Info reading body", "from", readUserIP(r), "error", err)
-		http.Error(w, "", http.StatusBadRequest)
-		return
-	}
-	if err := r.Body.Close(); err != nil {
-		log.Infow("Info closing body", "from", readUserIP(r), "error", err)
-		http.Error(w, "", http.StatusInternalServerError)
-		return
-	}
-
+func handleMQTT(c *gin.Context) {
 	a := &mqttAction{}
-	if err := json.Unmarshal(body, a); err != nil {
-		log.Infow("Info unmarshalling body", "from", readUserIP(r), "error", err)
-		http.Error(w, "", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(a); err != nil {
+		log.Infow("Info unmarshalling body", "from", readUserIP(c), "error", err)
+		c.String(http.StatusBadRequest, "")
 		return
 	}
 
 	if a.Token == "" || a.Token != token {
-		log.Errorw("Error token mismatch", "from", readUserIP(r), "token", a.Token)
-		http.Error(w, "", http.StatusUnauthorized)
+		log.Errorw("Error token mismatch", "from", readUserIP(c), "token", a.Token)
+		c.String(http.StatusUnauthorized, "")
 		return
 	}
 
 	if a.Topic == "" {
-		log.Infow("Info topic is blank", "from", readUserIP(r))
-		http.Error(w, "", http.StatusBadRequest)
+		log.Infow("Info topic is blank", "from", readUserIP(c))
+		c.String(http.StatusBadRequest, "")
 		return
 	}
 
 	if a.Payload == "" {
-		log.Infow("Info payload is blank", "from", readUserIP(r))
-		http.Error(w, "", http.StatusBadRequest)
+		log.Infow("Info payload is blank", "from", readUserIP(c))
+		c.String(http.StatusBadRequest, "")
 		return
 	}
 
 	t := mqttClient.Publish(a.Topic, a.QOS, a.Retained, a.Payload)
 	if t.Error() != nil {
-		log.Infow("Info publishing", "from", readUserIP(r), "topic", a.Topic, "payload", a.Payload,
+		log.Infow("Info publishing", "from", readUserIP(c), "topic", a.Topic, "payload", a.Payload,
 			"qos", a.QOS, "retained", a.Retained, "error", t.Error())
-		http.Error(w, "", http.StatusInternalServerError)
+		c.String(http.StatusInternalServerError, "")
 		return
 	}
-	log.Infow("Published", "from", readUserIP(r), "topic", a.Topic, "payload", a.Payload,
+	log.Infow("Published", "from", readUserIP(c), "topic", a.Topic, "payload", a.Payload,
 		"qos", a.QOS, "retained", a.Retained)
 }
 
@@ -122,6 +116,7 @@ func newClient(url string, user string, password string) (mqtt.Client, error) {
 	opts.SetAutoReconnect(true)
 	opts.SetMaxReconnectInterval(10 * time.Second)
 
+	// #nosec G402
 	opts.TLSConfig = &tls.Config{
 		InsecureSkipVerify: true,
 	}
@@ -144,13 +139,14 @@ type mqttAction struct {
 	Token    string `json:"token"`
 }
 
-func readUserIP(r *http.Request) string {
-	IPAddress := r.Header.Get("X-Real-Ip")
+func readUserIP(c *gin.Context) string {
+	IPAddress := c.GetHeader("X-Real-Ip")
 	if IPAddress == "" {
-		IPAddress = r.Header.Get("X-Forwarded-For")
+		IPAddress = c.GetHeader("X-Forwarded-For")
 	}
 	if IPAddress == "" {
-		IPAddress = r.RemoteAddr
+		ip, _ := c.RemoteIP()
+		IPAddress = ip.String()
 	}
 	return IPAddress
 }
