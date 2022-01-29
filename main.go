@@ -10,7 +10,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-gonic/gin"
-	limiter "github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter/v3"
 	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 	"go.uber.org/zap"
@@ -45,23 +45,33 @@ func main() {
 		log.Fatal(err)
 	}
 
+	rateLimit, err := rateLimitMiddleware()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.GET("/", handleRoot)
+	v1 := r.Group("/v1")
+	v1.Use(rateLimit)
+	v1.POST("/mqtt", handleMQTT)
+
+	log.Infow("Starting", "port", 8080)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", 8080), r))
+}
+
+func rateLimitMiddleware() (gin.HandlerFunc, error) {
 	// Define a limit rate to 4 requests per hour.
 	rate, err := limiter.NewRateFromFormatted("4-H")
 	if err != nil {
-		log.Fatal(err)
-		return
+		return nil, err
 	}
 	store := memory.NewStore()
 	// Create a new middleware with the limiter instance.
 	middleware := mgin.NewMiddleware(limiter.New(store, rate))
-
-	r := gin.New()
-	r.Use(middleware, gin.Recovery())
-	r.GET("/", handleRoot)
-	r.POST("/v1/mqtt", handleMQTT)
-
-	log.Infow("Starting", "port", 8080)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", 8080), r))
+	return middleware, nil
 }
 
 func handleRoot(c *gin.Context) {
