@@ -28,7 +28,7 @@ var (
 	token      = os.Getenv(envToken)
 	log        *zap.SugaredLogger
 
-	//go:embed banner.txt
+	//go:embed banner.html
 	banner string
 )
 
@@ -53,7 +53,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery())
-	r.GET("/", handleRoot)
+	r.GET("/", handleIndex)
 	v1 := r.Group("/v1")
 	v1.Use(rateLimit)
 	v1.POST("/mqtt", handleMQTT)
@@ -74,8 +74,8 @@ func rateLimitMiddleware() (gin.HandlerFunc, error) {
 	return middleware, nil
 }
 
-func handleRoot(c *gin.Context) {
-	c.String(http.StatusOK, banner)
+func handleIndex(c *gin.Context) {
+	c.Data(http.StatusOK, "text/html", []byte(banner))
 }
 
 func handleMQTT(c *gin.Context) {

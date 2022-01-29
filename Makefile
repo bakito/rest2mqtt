@@ -19,3 +19,7 @@ test: tidy fmt vet
 image:
 	podman build -t rest2mqtt --build-arg ARG_GOARCH=arm --build-arg ARG_GOARM=7 .
 	podman save rest2mqtt > rest2mqtt.tar
+
+.PHONY: post
+post:
+	curl -s -o /dev/null -w "%{http_code}\n" --data "{\"token\":\"${REST2MQTT_TOKEN}\", \"topic\":\"api/test\", \"payload\": \"test\",\"qos\":0, \"retained\":false}" localhost:8080/v1/mqtt
