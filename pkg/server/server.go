@@ -42,7 +42,7 @@ func New(log *zap.SugaredLogger, token string, mqttClient mqtt.Client, redisClie
 
 	r.Use(gin.Recovery())
 	r.GET("/", handleIndex)
-	r.GET(healthzPath, handleHealthz)
+	r.GET(healthzPath, s.handleHealthz)
 	v1 := r.Group("/v1")
 	v1.Use(rateLimit)
 	v1.POST("/mqtt", s.handleMQTT)
@@ -95,8 +95,12 @@ func handleIndex(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html", []byte(banner))
 }
 
-func handleHealthz(c *gin.Context) {
-	c.String(http.StatusOK, "OK")
+func (s *server) handleHealthz(c *gin.Context) {
+	if s.mqtt.IsConnected() {
+		c.String(http.StatusOK, "OK")
+	} else {
+		c.String(http.StatusInternalServerError, "NOT CONNECTED")
+	}
 }
 
 func (s *server) handleMQTT(c *gin.Context) {
@@ -136,7 +140,6 @@ func (s *server) handleMQTT(c *gin.Context) {
 		c.String(http.StatusBadRequest, "")
 		return
 	}
-
 	t := s.mqtt.Publish(a.Topic, a.QOS, a.Retained, a.Payload)
 	if t.Error() != nil {
 		s.log.Infow("Info publishing", "from", readUserIP(c), "topic", a.Topic, "payload", a.Payload,
