@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -46,6 +47,7 @@ func New(log *zap.SugaredLogger, token string, mqttClient mqtt.Client, redisClie
 	v1 := r.Group("/v1")
 	v1.Use(rateLimit)
 	v1.POST("/mqtt", s.handleMQTT)
+	v1.POST("/log", s.handleLog)
 	return s
 }
 
@@ -169,4 +171,13 @@ func readUserIP(c *gin.Context) string {
 		IPAddress = ip.String()
 	}
 	return IPAddress
+}
+
+func (s *server) handleLog(c *gin.Context) {
+	d, err := httputil.DumpRequest(c.Request, true)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "")
+		return
+	}
+	s.log.Infof("Request\n%s\n", string(d))
 }

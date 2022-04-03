@@ -14,7 +14,7 @@ COPY . /go/src/app/
 
 # build the source
 RUN go build -a -installsuffix cgo -o rest2mqtt .
-RUN upx rest2mqtt
+RUN upx --ultra-brute -q rest2mqtt
 
 FROM scratch
 
