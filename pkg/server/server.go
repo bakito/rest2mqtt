@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -45,7 +46,9 @@ func New(log *zap.SugaredLogger, token string, mqttClient mqtt.Client, redisClie
 	r.GET("/", handleIndex)
 	r.GET(healthzPath, s.handleHealthz)
 	v1 := r.Group("/v1")
-	v1.Use(rateLimit)
+	if !strings.EqualFold(os.Getenv("SKIP_RATE_LIMIT"), "true") {
+		v1.Use(rateLimit)
+	}
 	v1.POST("/mqtt", s.handleMQTT)
 	v1.POST("/log", s.handleLog)
 	return s
