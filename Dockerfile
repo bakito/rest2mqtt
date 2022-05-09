@@ -1,4 +1,4 @@
-FROM golang:1.17 as builder
+FROM golang:1.18 as builder
 # install xz and upx
 RUN apt-get update && \
     apt-get install -y xz-utils upx && \
