@@ -170,8 +170,7 @@ func readUserIP(c *gin.Context) string {
 		IPAddress = c.GetHeader("X-Forwarded-For")
 	}
 	if IPAddress == "" {
-		ip, _ := c.RemoteIP()
-		IPAddress = ip.String()
+		IPAddress = c.RemoteIP()
 	}
 	return IPAddress
 }
