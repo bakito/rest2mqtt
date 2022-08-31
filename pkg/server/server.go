@@ -7,6 +7,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"strings"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-gonic/gin"
@@ -68,7 +69,13 @@ type Server interface {
 
 func (s *server) Run() {
 	s.log.Infow("Starting", "port", port)
-	s.log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), s.r))
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           http.DefaultServeMux,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+
+	s.log.Fatal(srv.ListenAndServe())
 }
 
 func rateLimitMiddleware(client *libredis.Client) (gin.HandlerFunc, error) {
