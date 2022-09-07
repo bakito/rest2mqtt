@@ -71,7 +71,7 @@ func (s *server) Run() {
 	s.log.Infow("Starting", "port", port)
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", port),
-		Handler:           http.DefaultServeMux,
+		Handler:           s.r,
 		ReadHeaderTimeout: 1 * time.Second,
 	}
 
