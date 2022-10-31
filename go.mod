@@ -3,7 +3,7 @@ module github.com/bakito/rest2mqtt
 go 1.18
 
 require (
-	github.com/eclipse/paho.mqtt.golang v1.4.1
+	github.com/eclipse/paho.mqtt.golang v1.4.2
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/ulule/limiter/v3 v3.10.0
