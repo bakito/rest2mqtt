@@ -7,7 +7,7 @@ import (
 
 	"github.com/bakito/rest2mqtt/pkg/mqtt"
 	"github.com/bakito/rest2mqtt/pkg/server"
-	libredis "github.com/go-redis/redis/v8"
+	libredis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
