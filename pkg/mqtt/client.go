@@ -20,8 +20,8 @@ func Client(log *zap.SugaredLogger, url string, user string, password string) (m
 	opts.SetAutoReconnect(true)
 	opts.SetMaxReconnectInterval(10 * time.Second)
 
-	// #nosec G402
 	opts.TLSConfig = &tls.Config{
+		// #nosec G402
 		InsecureSkipVerify: true,
 	}
 
