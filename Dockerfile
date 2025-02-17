@@ -1,8 +1,6 @@
-FROM golang:1.23-bullseye as builder
+FROM golang:1.24-alpine AS builder
 # install xz and upx
-RUN apt-get update && \
-    apt-get install -y xz-utils upx && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk update && apk add upx
 
 # setup the working directory
 WORKDIR /go/src/app
