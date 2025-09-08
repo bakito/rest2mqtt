@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/gin-gonic/gin v1.10.1
-	github.com/redis/go-redis/v9 v9.12.1
+	github.com/redis/go-redis/v9 v9.13.0
 	github.com/ulule/limiter/v3 v3.11.2
 	go.uber.org/zap v1.27.0
 )
