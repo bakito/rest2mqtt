@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/redis/go-redis/v9 v9.17.0
 	github.com/ulule/limiter/v3 v3.11.2
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 )
 
 require (
