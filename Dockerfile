@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26-alpine AS builder
 # install xz and upx
 RUN apk update && apk add upx
 
